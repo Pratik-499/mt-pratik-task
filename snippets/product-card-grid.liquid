@@ -8,6 +8,16 @@
     Usage:
     {% include 'product-card-grid', max_height: max_height, product: product, show_vendor: section.settings.show_vendor %}
 {% endcomment %}
+
+{% assign p_created = product.created_at | date:'%s' %}
+{% assign current_date = 'now' | date:'%s' %}
+{% assign difference = date_now | minus: date_created %}
+{% assign isNew = false %}
+{% if difference < 2592000 %}
+  {% assign isNew = true %}
+{% endif %}
+
+
 <div class="grid-view-item{% unless product.available %} grid-view-item--sold-out{% endunless %} product-card">
   <a class="grid-view-item__link grid-view-item__image-container full-width-link" href="{{ product.url | within: collection }}">
     <span class="visually-hidden">{{ product.title }}</span>
@@ -32,7 +42,12 @@
               data-widths="[180, 360, 540, 720, 900, 1080, 1296, 1512, 1728, 2048]"
               data-aspectratio="{{ preview_image.aspect_ratio }}"
               data-sizes="auto"
-              data-image>
+              data-image />
+        
+        {% comment %} Product "New" badge {% endcomment %}
+        {% if isNew %}
+          <span class="badge-new">New</span>
+        {% endif %}
       </div>
     </div>
   </div>

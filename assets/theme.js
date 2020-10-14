@@ -7422,18 +7422,28 @@ window.theme = window.theme || {};
 
 theme.Filters = (function() {
   var settings = {
-    mediaQueryMediumUp: '(min-width: ' + theme.breakpoints.medium + 'px)'
+    mediaQueryMediumUp: '(min-width: ' + theme.breakpoints.medium + 'px)',
+    currentPage: 1,
+    totalPage: null,
+    pagiURL: null
   };
 
   var selectors = {
     filterSelection: '#FilterTags',
     sortSelection: '#SortBy',
-    selectInput: '[data-select-input]'
+    selectInput: '[data-select-input]',
+    productsWrapper:'#Collection > ul',
+    loadMore: '.btn-lodmore',
+    quickviewTrigger: '.gridbox > li > .product-card > a',
+    quickviewModal: '.quickview',
+    loading:'.loading-img'
   };
 
   function Filters(container) {
     this.filterSelect = container.querySelector(selectors.filterSelection);
     this.sortSelect = container.querySelector(selectors.sortSelection);
+    this.loadMore = container.querySelector(selectors.loadMore);
+    this.quickviewTrigger = container.querySelectorAll(selectors.quickviewTrigger);
 
     this.selects = document.querySelectorAll(selectors.selectInput);
 
@@ -7462,6 +7472,26 @@ theme.Filters = (function() {
     if (this.sortSelect) {
       this.sortSelect.addEventListener('change', this._onSortChange.bind(this));
     }
+    
+    // Load More Event
+    if (this.loadMore) {
+      settings.currentPage = $(selectors.loadMore).data('cp');
+      settings.totalPage = $(selectors.loadMore).data('tp');
+      this.loadMore.addEventListener('click', this._fetchProducts.bind(this));
+    }
+
+    var that = this;
+    if(screen.width > 767){
+      $(document).on('click','.gridbox > li > .product-card > a',function(e) {
+        e.preventDefault();
+        that._showLoading();
+        var $elem = $(this);
+        that._quickview.bind(that,$elem)();
+      });
+      $(document).on('click','.quickview .close',function(e) {
+        $(this).closest('.quickview').removeClass('active');
+      });
+    }
 
     theme.Helpers.promiseStylesheet().then(
       function() {
@@ -7475,6 +7505,75 @@ theme.Filters = (function() {
     _initBreakpoints: function() {
       if (this.mql.matches) {
         slate.utils.resizeSelects(this.selects);
+      }
+    },
+    _showLoading: function(){
+      $(selectors.loading).fadeIn();
+    },
+    _hideLoading: function(){
+      $(selectors.loading).fadeOut();
+    },
+    _quickview: function($elem){
+      // e.preventDefault();
+      var that = this;
+      var viewURL = $elem.closest('li').data('view');
+      if(viewURL){
+        $.ajax({
+            type:"get",
+            url:viewURL,
+            success: function(res){
+              var data = $(res).html();
+              $(selectors.quickviewModal).find('.quickview--inner').html(data);
+              that._hideLoading();
+              $(selectors.quickviewModal).addClass('active');
+            },
+            error: function(err){
+              console.log(err)
+            }
+          });
+      }
+    },
+
+    _fetchProducts : function(e) {
+      e.preventDefault();
+      var URL = $(this.loadMore).attr('href');
+      var cp = settings.currentPage;
+      var tp = settings.totalPage;
+      
+      if(URL && cp && tp && cp < tp){
+        var that = this;
+        var text = $(that.loadMore).data('text');
+        var ptext = $(that.loadMore).data('ptext');
+        $(that.loadMore).text(ptext);
+        $.ajax({
+          type:"get",
+          url:URL,
+          success: function(res){
+            $(that.loadMore).text(text);
+            var productsHtml = $(res).find(selectors.productsWrapper).html();
+            var nextURL = $(res).find(selectors.loadMore).attr('href');
+
+            if(productsHtml){
+              $(selectors.productsWrapper).append(productsHtml);
+              settings.currentPage = $(res).find(selectors.loadMore).data('cp');
+              settings.totalPage = $(res).find(selectors.loadMore).data('tp');
+
+              if(nextURL){
+                $(selectors.loadMore).attr('href',nextURL);
+                $(selectors.loadMore).attr('data-cp',settings.currentPage);
+                $(selectors.loadMore).attr('data-tp',settings.totalPage);
+                // history.pushState('','',URL);
+                history.replaceState('','',URL);
+              }
+              if(settings.currentPage == settings.totalPage){
+                $(selectors.loadMore).hide();
+              }
+            }
+          },
+          error: function(err){
+            console.log(err)
+          }
+        });
       }
     },
 

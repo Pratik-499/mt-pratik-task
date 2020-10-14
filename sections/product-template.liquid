@@ -1,3 +1,8 @@
+{% assign isQuicview = false %}
+{% if template.suffix == 'quick' %}
+  {% assign isQuicview = true %}
+{% endif %}
+
 <div class="product-template__container page-width"
   id="ProductSection-{{ section.id }}"
   data-section-id="{{ section.id }}"
@@ -232,7 +237,7 @@
                     {% include 'icon-spinner' %}
                   </span>
                 </button>
-                {% if section.settings.enable_payment_button %}
+                {% if section.settings.enable_payment_button and isQuicview == false %}
                   {{ form | payment_button }}
                 {% endif %}
               </div>
