@@ -1,0 +1,11 @@
+<ul class="sidebar-nav">
+	{% for link in linklists.main-menu.links %}
+		{% if link.links != blank %}
+			{% for sublink in link.links %}
+				<li {% if sublink.active %}class="active"{% endif %}>
+				  <a href="{{ sublink.url }}">{{ sublink.title }}</a>
+				</li>
+			{% endfor %}
+		{% endif %}
+	{% endfor %}
+</ul>
