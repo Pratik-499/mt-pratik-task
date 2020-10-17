@@ -8,12 +8,14 @@
     Usage:
     {% include 'product-card-grid', max_height: max_height, product: product, show_vendor: section.settings.show_vendor %}
 {% endcomment %}
-
+{% assign seconds_in_day = 86400 %}
+{% assign new_badge_day_gap = section.settings.new_badge_day_duration | default:7 %}
+{% assign new_badge_duration = new_badge_day_gap | times: seconds_in_day %}
 {% assign p_created = product.created_at | date:'%s' %}
 {% assign current_date = 'now' | date:'%s' %}
-{% assign difference = date_now | minus: date_created %}
+{% assign difference = current_date | minus: p_created %}
 {% assign isNew = false %}
-{% if difference < 2592000 %}
+{% if difference < new_badge_duration %}
   {% assign isNew = true %}
 {% endif %}
 
